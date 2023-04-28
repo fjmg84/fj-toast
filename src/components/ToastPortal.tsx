@@ -1,16 +1,25 @@
 import { forwardRef, useEffect, useImperativeHandle, useState } from "react";
 import ReactDOM from "react-dom";
-import PropTypes from "prop-types";
 import { useToastPortal } from "../hooks/useToastPortal";
 import { uuid } from "../util/functionId";
 import Toast from "./Toast";
+import { ToastProps } from "../interfaces/ToastInterfaces";
+
+interface ToastPortal {
+  autoClose?: boolean;
+  autoCloseTime?: number;
+  position: "top-right" | "top-left" | "bottom-right" | "bottom-left";
+  myStyles?: {};
+}
 
 export const ToastPortal = forwardRef(
-  ({ autoClose = true, autoCloseTime = 5000, position, myStyles }, ref) => {
-    const [toasts, setToasts] = useState([]);
-
-    const { loaded, portalId } = useToastPortal({ position });
+  (
+    { autoClose = true, autoCloseTime = 5000, position, myStyles }: ToastPortal,
+    ref
+  ) => {
+    const [toasts, setToasts] = useState<ToastProps[]>([]);
     const [removing, setRemoving] = useState("");
+    const { loaded, portalId } = useToastPortal({ position });
 
     useEffect(() => {
       if (removing) {
@@ -27,12 +36,12 @@ export const ToastPortal = forwardRef(
       }
     }, [toasts, autoCloseTime, autoClose]);
 
-    const removeToast = (id) => {
+    const removeToast = (id: any) => {
       setToasts(toasts.filter((toast) => toast.id !== id));
     };
 
     useImperativeHandle(ref, () => ({
-      addMessage(toast) {
+      addMessage(toast: ToastProps) {
         setToasts([...toasts, { ...toast, id: uuid() }]);
       },
     }));
@@ -40,34 +49,23 @@ export const ToastPortal = forwardRef(
     return loaded ? (
       ReactDOM.createPortal(
         <div>
-          {toasts.map((t) => {
+          {toasts.map((t, i) => {
             return (
-              <Toast
-                key={t.id}
-                id={t.id}
-                message={t.message}
-                onClose={removeToast}
-                myStyles={myStyles}
-              />
+              <div key={i}>
+                <Toast
+                  id={t.id}
+                  message={t.message}
+                  onClose={removeToast}
+                  myStyles={myStyles ? myStyles : {}}
+                />
+              </div>
             );
           })}
         </div>,
-        document.getElementById(portalId)
+        document.getElementById(portalId) as Element | DocumentFragment
       )
     ) : (
       <></>
     );
   }
 );
-
-ToastPortal.propTypes = {
-  autoClose: PropTypes.bool,
-  autoCloseTime: PropTypes.number,
-  position: PropTypes.oneOf([
-    "top-right",
-    "bottom-right",
-    "top-left",
-    "bottom-left",
-  ]),
-  myStyles: PropTypes.object,
-};
