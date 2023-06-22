@@ -10,26 +10,36 @@ import { ToastPortal } from "./components/ToastPortal";
 ```
 
 ```
- const toastRef = useRef();
+ const App = () => {
+  const toastRef = useRef<ToastRefProps>();
+  const messageRef = useRef<HTMLInputElement>(null)
 
- const addToast = (event) => {
+  const addToast = (event: React.FormEvent<HTMLFormElement>): void => {
     event.preventDefault();
 
-    toastRef.current.addMessage({
-      message: event.target[0].value,
-    });
+    if (messageRef.current) {
+      toastRef.current?.addMessage({
+        message: messageRef.current.value
+      });
+    }
   };
 
   return (
     <div className="App">
       <h1>Hello</h1>
-      <form onSubmit={(e) => addToast(e)}>
-        <input type="text" />
+
+      <form onSubmit={addToast}>
+
+        <input ref={messageRef} type="text" name="message" />
         <button>Show Toast</button>
+
       </form>
-      <ToastPortal ref={toastRef} />
+
+
+      <ToastPortal position={"bottom-left"} ref={toastRef} />
     </div>
   );
+};
 ```
 
 ## Props of ToastPortal
